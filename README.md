@@ -2,13 +2,13 @@
 
 This is a slack-bot to integrate with the CFA fast-track course slack channel.
 
-It will display the ping-pong leaderboard by fetching data from the http://dynamicpilgrim.herokuapp.com/api endpoint.
+It will display the ping-pong leaderboard by fetching data from the pong scoring API endpoint.
 
-(Planning - Trello Board)[https://trello.com/b/qKxZTwj5/slack-pongbot]
+[Planning - Trello Board](https://trello.com/b/qKxZTwj5/slack-pongbot)
 
-(Dynamic Pilgrim - The CFA Pong App)[http://dynamicpilgrim.herokuapp.com]
+[Dynamic Pilgrim - The CFA Pong App](http://dynamicpilgrim.herokuapp.com)
 
-(Dynamic Pilgrim - The Github Repo)[https://github.com/BinnyK/dynamic-pilgrim]
+[Dynamic Pilgrim - The Github Repo](https://github.com/BinnyK/dynamic-pilgrim)
 
 ## Install
 
