@@ -63,7 +63,6 @@ This bot demonstrates many of the core features of Botkit:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-
 if (!process.env.token) {
     console.log('Error: Specify token in environment');
     process.exit(1);
@@ -72,6 +71,20 @@ if (!process.env.token) {
 var Botkit = require('Botkit');
 var os = require('os');
 var axios = require('axios');
+const endpoint = 'http://dynamicpilgrim.herokuapp.com/api/games'
+
+let game = []
+function getGame(){
+    axios.get('http://dynamicpilgrim.herokuapp.com/api/games')
+        .then(function(response){
+            game.push(response["data"][0])
+            console.log("Game is:", game);
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+}
+getGame()
 
 var controller = Botkit.slackbot({
     debug: false,
@@ -81,12 +94,30 @@ var bot = controller.spawn({
     token: process.env.token
 }).startRTM();
 
-controller.hears(['leaderboard'], 'direct_message,direct_mention,mention', function(bot, message) {
+controller.hears(['won', 'last', 'lost'], 'direct_message,direct_mention,mention', function(bot, message) {
     // Fetch data from the api endpoint dynamic-pilgrim.herokuapp.com/api/ at store it in a var leaderboard
     // I can use either axios or fetch
     // For this MVP, do a simple json.stringify
     // fire off a convo.say and pass in leaderboard.
+    bot.api.reactions.add({
+        timestamp: message.ts,
+        channel: message.channel,
+        name: 'table_tennis_paddle_and_ball',
+    }, function(err, res) {
+        if (err) {
+            bot.botkit.log('Failed to add emoji reaction :(', err);
+        }
+    });
+
+    controller.storage.users.get(message.user, function(err, user) {
+        if (user && user.name) {
+            bot.reply(message, 'Hello ' + user.name + '!!');
+        } else {
+            bot.reply(message, `${game[0].winner_name} just absolutely drop kicked ${game[0].loser_name} by ${game[0].winner_score} to ${game[0].loser_score}`);
+        }
+    });    
 })
+//leaderboard
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
@@ -99,7 +130,6 @@ controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', funct
             bot.botkit.log('Failed to add emoji reaction :(', err);
         }
     });
-
 
     controller.storage.users.get(message.user, function(err, user) {
         if (user && user.name) {
@@ -180,8 +210,6 @@ controller.hears(['what is my name', 'who am i'], 'direct_message,direct_mention
                                 });
                             });
 
-
-
                         } else {
                             // this happens if the conversation ended prematurely for some reason
                             bot.reply(message, 'OK, nevermind!');
@@ -192,7 +220,6 @@ controller.hears(['what is my name', 'who am i'], 'direct_message,direct_mention
         }
     });
 });
-
 
 controller.hears(['shutdown'], 'direct_message,direct_mention,mention', function(bot, message) {
 
@@ -220,7 +247,6 @@ controller.hears(['shutdown'], 'direct_message,direct_mention,mention', function
         ]);
     });
 });
-
 
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
     'direct_message,direct_mention,mention', function(bot, message) {
