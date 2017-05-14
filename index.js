@@ -1,10 +1,16 @@
 "use strict";
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-           ______     ______     ______   __  __     __     ______
-          /\  == \   /\  __ \   /\__  _\ /\ \/ /    /\ \   /\__  _\
-          \ \  __<   \ \ \/\ \  \/_/\ \/ \ \  _"-.  \ \ \  \/_/\ \/
-           \ \_____\  \ \_____\    \ \_\  \ \_\ \_\  \ \_\    \ \_\
-            \/_____/   \/_____/     \/_/   \/_/\/_/   \/_/     \/_/
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ___         ___           ___           ___                         ___                 
+     /  /\       /  /\         /__/\         /  /\         _____         /  /\          ___   
+    /  /::\     /  /::\        \  \:\       /  /:/_       /  /::\       /  /::\        /  /\  
+   /  /:/\:\   /  /:/\:\        \  \:\     /  /:/ /\     /  /:/\:\     /  /:/\:\      /  /:/  
+  /  /:/~/:/  /  /:/  \:\   _____\__\:\   /  /:/_/::\   /  /:/~/::\   /  /:/  \:\    /  /:/   
+ /__/:/ /:/  /__/:/ \__\:\ /__/::::::::\ /__/:/__\/\:\ /__/:/ /:/\:| /__/:/ \__\:\  /  /::\   
+ \  \:\/:/   \  \:\ /  /:/ \  \:\~~\~~\/ \  \:\ /~~/:/ \  \:\/:/~/:/ \  \:\ /  /:/ /__/:/\:\  
+  \  \::/     \  \:\  /:/   \  \:\  ~~~   \  \:\  /:/   \  \::/ /:/   \  \:\  /:/  \__\/  \:\ 
+   \  \:\      \  \:\/:/     \  \:\        \  \:\/:/     \  \:\/:/     \  \:\/:/        \  \:\
+    \  \:\      \  \::/       \  \:\        \  \::/       \  \::/       \  \::/          \__\/
+     \__\/       \__\/         \__\/         \__\/         \__\/         \__\/                
 
 # RUN THE BOT:
 
@@ -16,7 +22,7 @@
 
     token=<MY TOKEN> node index.js
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 if (!process.env.token) {
     console.log('Error: Specify token in environment');
@@ -26,20 +32,39 @@ if (!process.env.token) {
 var Botkit = require('Botkit');
 var os = require('os');
 var axios = require('axios');
-const endpoint = 'http://dynamicpilgrim.herokuapp.com/api/games'
+const gamesEndpoint = 'http://dynamicpilgrim.herokuapp.com/api/v1/games'
+const playersEndpoint = 'http://dynamicpilgrim.herokuapp.com/api/v1/players'
 
-let game = []
+// Get the last game
+let lastGame = []
 function getGame(){
-    axios.get('http://dynamicpilgrim.herokuapp.com/api/games')
+    axios.get(gamesEndpoint)
         .then(function(response){
-            game.push(response["data"][0])
-            console.log("Game is:", game);
+            lastGame.push(response["data"][0])
+            console.log("Game is:", lastGame);
         })
         .catch(function(error) {
             console.log(error);
         });
-}
+};
 getGame()
+
+// Get players
+let players = []
+function getPlayers() {
+    axios.get(playersEndpoint)
+        .then(function(response){
+            players.push(response["data"])
+            console.log("List of players", players)
+        })
+};
+getPlayers()
+
+// Player sorting
+
+let mostWins = players.sort(function(a, b){
+    return a.wins - b.wins;
+})
 
 var controller = Botkit.slackbot({
     debug: false,
@@ -50,10 +75,6 @@ var bot = controller.spawn({
 }).startRTM();
 
 controller.hears(['won', 'last', 'lost'], 'direct_message,direct_mention,mention', function(bot, message) {
-    // Fetch data from the api endpoint dynamic-pilgrim.herokuapp.com/api/ at store it in a var leaderboard
-    // I can use either axios or fetch
-    // For this MVP, do a simple json.stringify
-    // fire off a convo.say and pass in leaderboard.
     bot.api.reactions.add({
         timestamp: message.ts,
         channel: message.channel,
@@ -65,14 +86,25 @@ controller.hears(['won', 'last', 'lost'], 'direct_message,direct_mention,mention
     });
 
     controller.storage.users.get(message.user, function(err, user) {
-        if (user && user.name) {
-            bot.reply(message, 'Hello ' + user.name + '!!');
-        } else {
-            bot.reply(message, `${game[0].winner_name} just absolutely drop kicked ${game[0].loser_name} by ${game[0].winner_score} to ${game[0].loser_score}`);
-        }
+        bot.reply(message, `${lastGame[0].winner_name} just absolutely drop kicked ${lastGame[0].loser_name} by ${lastGame[0].winner_score} to ${lastGame[0].loser_score}`);
     });    
 })
 //leaderboard
+controller.hears(['most wins', 'top', 'leaderboard'], 'direct_message,direct_mention,mention', function(bot, message) {
+    bot.api.reactions.add({
+        timestamp: message.ts,
+        channel: message.channel,
+        name: 'table_tennis_paddle_and_ball',
+    }, function(err, res) {
+        if (err) {
+            bot.botkit.log('Failed to add emoji reaction :(', err);
+        }
+    });
+
+    controller.storage.users.get(message.user, function(err, user) {
+        bot.reply(message, `${mostWins}`);
+    });    
+})
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
