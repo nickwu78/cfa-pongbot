@@ -26,6 +26,8 @@ The token is the API key for the bot in your slack integration.
 
 ## Pongbot understands:
 
-* game - fetches the last game played from /api/games and displays it in the slack message.
+* "won", "last", "lost" - fetches the last game played from /api/v1/games and shows who won and lost
+
+* "most points", "leaderboard", "top", "points" - fetches the (already sorted) list of players from /api/v1/players
 
 * more to come
