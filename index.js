@@ -1,3 +1,5 @@
+"use strict";
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
            ______     ______     ______   __  __     __     ______
           /\  == \   /\  __ \   /\__  _\ /\ \/ /    /\ \   /\__  _\
@@ -68,14 +70,14 @@ if (!process.env.token) {
     process.exit(1);
 }
 
-var Botkit = require('Botkit');
+var Botkit = require('./node_modules/botkit');
 var os = require('os');
-var axios = require('axios');
-const endpoint = 'http://dynamicpilgrim.herokuapp.com/api/games'
+var axios = require('./node_modules/axios');
+const endpoint = 'http://dynamicpilgrim.herokuapp.com/api/v1/games'
 
 let game = []
 function getGame(){
-    axios.get('http://dynamicpilgrim.herokuapp.com/api/games')
+    axios.get('http://dynamicpilgrim.herokuapp.com/api/v1/games')
         .then(function(response){
             game.push(response["data"][0])
             console.log("Game is:", game);
