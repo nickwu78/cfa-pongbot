@@ -4,6 +4,8 @@ This is a slack-bot to integrate with the CFA fast-track course slack channel.
 
 It will display the ping-pong leaderboard by fetching data from the pong scoring API endpoint.
 
+![looping gif](https://media.giphy.com/media/l0Iy56x8OCifK6ZEc/giphy.gif)
+
 [Planning - Trello Board](https://trello.com/b/qKxZTwj5/slack-pongbot)
 
 [Dynamic Pilgrim - The CFA Pong App](http://dynamicpilgrim.herokuapp.com)
