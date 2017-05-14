@@ -1,23 +1,17 @@
 "use strict";
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-           ______     ______     ______   __  __     __     ______
-          /\  == \   /\  __ \   /\__  _\ /\ \/ /    /\ \   /\__  _\
-          \ \  __<   \ \ \/\ \  \/_/\ \/ \ \  _"-.  \ \ \  \/_/\ \/
-           \ \_____\  \ \_____\    \ \_\  \ \_\ \_\  \ \_\    \ \_\
-            \/_____/   \/_____/     \/_/   \/_/\/_/   \/_/     \/_/
-
-
-This is a sample Slack bot built with Botkit.
-
-This bot demonstrates many of the core features of Botkit:
-
-* Connect to Slack using the real time API
-* Receive messages based on "spoken" patterns
-* Reply to messages
-* Use the conversation system to ask questions
-* Use the built in storage system to store and retrieve information
-  for a user.
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ___         ___           ___           ___                         ___                 
+     /  /\       /  /\         /__/\         /  /\         _____         /  /\          ___   
+    /  /::\     /  /::\        \  \:\       /  /:/_       /  /::\       /  /::\        /  /\  
+   /  /:/\:\   /  /:/\:\        \  \:\     /  /:/ /\     /  /:/\:\     /  /:/\:\      /  /:/  
+  /  /:/~/:/  /  /:/  \:\   _____\__\:\   /  /:/_/::\   /  /:/~/::\   /  /:/  \:\    /  /:/   
+ /__/:/ /:/  /__/:/ \__\:\ /__/::::::::\ /__/:/__\/\:\ /__/:/ /:/\:| /__/:/ \__\:\  /  /::\   
+ \  \:\/:/   \  \:\ /  /:/ \  \:\~~\~~\/ \  \:\ /~~/:/ \  \:\/:/~/:/ \  \:\ /  /:/ /__/:/\:\  
+  \  \::/     \  \:\  /:/   \  \:\  ~~~   \  \:\  /:/   \  \::/ /:/   \  \:\  /:/  \__\/  \:\ 
+   \  \:\      \  \:\/:/     \  \:\        \  \:\/:/     \  \:\/:/     \  \:\/:/        \  \:\
+    \  \:\      \  \::/       \  \:\        \  \::/       \  \::/       \  \::/          \__\/
+     \__\/       \__\/         \__\/         \__\/         \__\/         \__\/                
 
 # RUN THE BOT:
 
@@ -27,43 +21,9 @@ This bot demonstrates many of the core features of Botkit:
 
   Run your bot from the command line:
 
-    token=<MY TOKEN> node slack_bot.js
+    token=<MY TOKEN> node index.js
 
-# USE THE BOT:
-
-  Find your bot inside Slack to send it a direct message.
-
-  Say: "Hello"
-
-  The bot will reply "Hello!"
-
-  Say: "who are you?"
-
-  The bot will tell you its name, where it is running, and for how long.
-
-  Say: "Call me <nickname>"
-
-  Tell the bot your nickname. Now you are friends.
-
-  Say: "who am I?"
-
-  The bot will tell you your nickname, if it knows one for you.
-
-  Say: "shutdown"
-
-  The bot will ask if you are sure, and then shut itself down.
-
-  Make sure to invite your bot into other channels using /invite @<my bot>!
-
-# EXTEND THE BOT:
-
-  Botkit has many features for building cool and useful bots!
-
-  Read all about it here:
-
-    -> http://howdy.ai/botkit
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 if (!process.env.token) {
     console.log('Error: Specify token in environment');
@@ -73,20 +33,34 @@ if (!process.env.token) {
 var Botkit = require('./node_modules/botkit');
 var os = require('os');
 var axios = require('./node_modules/axios');
-const endpoint = 'http://dynamicpilgrim.herokuapp.com/api/v1/games'
+const gamesEndpoint = 'http://dynamicpilgrim.herokuapp.com/api/v1/games'
+const playersEndpoint = 'http://dynamicpilgrim.herokuapp.com/api/v1/players'
 
-let game = []
+// Get the last game
+let lastGame = []
 function getGame(){
-    axios.get('http://dynamicpilgrim.herokuapp.com/api/v1/games')
+    axios.get(gamesEndpoint)
         .then(function(response){
-            game.push(response["data"][0])
-            console.log("Game is:", game);
+            lastGame.push(response["data"][0])
+            console.log("Game is:", lastGame);
         })
         .catch(function(error) {
             console.log(error);
         });
-}
+};
 getGame()
+
+// Get players
+let players = []
+function getPlayers() {
+    axios.get(playersEndpoint)
+        .then(function(response){
+            players.push(response["data"])
+            console.log("Players", players)
+        })
+};
+getPlayers()
+console.log(players[0])
 
 var controller = Botkit.slackbot({
     debug: false,
@@ -97,10 +71,6 @@ var bot = controller.spawn({
 }).startRTM();
 
 controller.hears(['won', 'last', 'lost'], 'direct_message,direct_mention,mention', function(bot, message) {
-    // Fetch data from the api endpoint dynamic-pilgrim.herokuapp.com/api/ at store it in a var leaderboard
-    // I can use either axios or fetch
-    // For this MVP, do a simple json.stringify
-    // fire off a convo.say and pass in leaderboard.
     bot.api.reactions.add({
         timestamp: message.ts,
         channel: message.channel,
@@ -112,14 +82,26 @@ controller.hears(['won', 'last', 'lost'], 'direct_message,direct_mention,mention
     });
 
     controller.storage.users.get(message.user, function(err, user) {
-        if (user && user.name) {
-            bot.reply(message, 'Hello ' + user.name + '!!');
-        } else {
-            bot.reply(message, `${game[0].winner_name} just absolutely drop kicked ${game[0].loser_name} by ${game[0].winner_score} to ${game[0].loser_score}`);
-        }
+        bot.reply(message, `${lastGame[0].winner_name} just absolutely drop kicked ${lastGame[0].loser_name} by ${lastGame[0].winner_score} to ${lastGame[0].loser_score}`);
     });    
 })
+
 //leaderboard
+controller.hears(['most points', 'top', 'leaderboard', 'points'], 'direct_message,direct_mention,mention', function(bot, message) {
+    bot.api.reactions.add({
+        timestamp: message.ts,
+        channel: message.channel,
+        name: 'table_tennis_paddle_and_ball',
+    }, function(err, res) {
+        if (err) {
+            bot.botkit.log('Failed to add emoji reaction :(', err);
+        }
+    });
+
+    controller.storage.users.get(message.user, function(err, user) {
+        bot.reply(message, `CFA Pong Top 5:\n:trophy:${players[0][0].username} - Points: ${players[0][0].points}\n:slightly_smiling_face:${players[0][1].username} - Points: ${players[0][1].points}\n:neutral_face:${players[0][2].username} - Points: ${players[0][2].points}\n:slightly_frowning_face:${players[0][3].username} - Points: ${players[0][3].points}\n:rage:${players[0][4].username} - Points: ${players[0][4].points}`)
+    });
+})
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
